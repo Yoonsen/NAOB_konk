@@ -24,6 +24,7 @@ def to_excel(df):
     processed_data = output.getvalue()
     return processed_data
 
+
 @st.cache_data
 def konk(_corpus = None, query = None):
     """Create a concordance from a corpus"""
@@ -33,6 +34,7 @@ def konk(_corpus = None, query = None):
     
     conc = dh.Concordance(_corpus, query, limit = 10000)
     return conc
+
 
 def konks_csv(conc, corpus):
     konks = pd.merge(conc.show(n=conc.size, style=False), corpus.corpus[['urn', 'year', 'authors', 'title']], on = 'urn')
