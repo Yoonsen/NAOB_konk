@@ -169,5 +169,5 @@ if not search == "":
             column_config = col_config,
             column_order = show_columns, 
             hide_index = True,
+            use_container_width=True,
             )
-    
