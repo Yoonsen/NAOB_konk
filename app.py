@@ -4,13 +4,10 @@ from urllib.parse import quote
 import dhlab.api.dhlab_api as api
 import pandas as pd
 from PIL import Image
-import urllib
-import utils 
+import utils
 
 # for excelnedlastning
 from io import BytesIO
-#from pyxlsb import open_workbook as open_xlsb
-
 
 
 @st.cache_data
@@ -30,8 +27,8 @@ def konk(_corpus = None, query = None):
     # exit if corpus is empty
     if _corpus.corpus.empty:
         return pd.DataFrame()
-    
-    conc = dh.Concordance(_corpus, query, limit = 10000) 
+
+    conc = dh.Concordance(_corpus, query, limit = 10000)
     konkdf = pd.merge(conc.frame, _corpus.frame, on='urn')
     konkdf = konkdf[['urn','year','authors', 'title', 'concordance']].sort_values('year')
     return konkdf
@@ -43,7 +40,7 @@ def display_konks_old(conc, search, size, corpus):
     conc['concordance'] = conc['concordance'].apply(lambda c: c.replace('<b>', '**').replace('</b>','**'))
     conc = conc[['link','year','authors', 'title', 'concordance']].sort_values(by='year')
     return '\n\n'.join(
-        [' '.join([str(x[1])] + [" **—** "] + [str(y) for y in x[2:-1]] + [" **—** " + str(x[-1])]) for x in 
+        [' '.join([str(x[1])] + [" **—** "] + [str(y) for y in x[2:-1]] + [" **—** " + str(x[-1])]) for x in
          conc.sample(min(int(size), len(konks))).sort_values(by='year').itertuples()])
 
 
@@ -72,8 +69,7 @@ def korpus():
     c.extend_from_identifiers(df.urn.unique().tolist())
     return c.frame
 
-
-#### NAOB APP ### 
+#### NAOB APP ###
 ### PAGE LAYOUT ###
 st.set_page_config(
     layout="wide",
@@ -89,7 +85,7 @@ col1, col2 = st.columns(2)
 col3, col4 = st.columns(2)
 col5, col6 = st.columns(2)
 
- 
+
 ### PAGE WIDGETS ###
 with header:
     # Custom header with external style sheet for logos and icons
@@ -99,15 +95,15 @@ with header:
 
 naob = korpus()
 
-#image = Image.open('NB-logo-no-eng-svart.png')
-#st.image(image, width = 200)
+# image = Image.open('NB-logo-no-eng-svart.png')
+# st.image(image, width = 200)
 
 with col3:
     samplesize = st.number_input("Vis maks antall konkordanser:", 150, help = "Angi maks antall konkordanser som skal vises i gangen.")
 
 with col4:
     filename = st.text_input("Angi et filnavn for konkordansene:", "konkordanser.xlsx", help="Filen vil sannlygvis ligge i mappen ved navn Nedlastninger.")
-    
+
 with col1:
     search = st.text_input('Ord og fraser', "leksikografi", help= """Skriv inn ord for å finne match i avsnitt. For alternativer sett OR imellom: 'spise OR spise' men utelat anførselstegn. Grupper ord i fraser ved å omslutte dem med anførselstegn:"spise opp" vil matche når ordene følger på hverandre. Ord kan stå vilkårlig nær hverandre med nøkkelordet NEAR: NEAR(spise opp, 2) får match når ordene maks skilles med to ord. Ord med bindestrek eller punktum må settes i anførselstegn: "Nord-Norge" og "dr.art.". Om to eller flere ord skrives uten anførselstegn rundt vil det bli match i alle avsnitt som inneholder de to ordene. Trunker søke med *, for eksempel spise*.""")
 
@@ -127,47 +123,46 @@ if not search == "":
 
     with col5:
         st.markdown(f"Antall konkordanser totalt: **{len(konks)}**")
-    
+
     with col6:
         download_button = st.download_button(
             ":arrow_down: Last ned",
             to_excel(konks),
-            filename, 
-            help = "Last ned data til en CSV-fil som kan åpnes i excel og andre tabell-programmer."
+            filename,
+            help="Last ned data til en CSV-fil som kan åpnes i excel og andre tabell-programmer.",
         )
         if download_button:
             st.toast(f'Lastet ned til `{filename}`', icon=":material/done_outline:")
 
-    #if (samplesize < len(konks)):
-    
+
     if konks.empty:
-        st.info(f"Ingen treff", icon=":material/cross:")
+        st.warning("Ingen treff")
     else:
         concordances = display_konks(konks, search)
 
-        split_context = st.toggle("Del opp konkordansene i flere kolonner", False, help="Del opp venstre og høyre kontekst til søkeordet i separate kolonner.")    
-        
+        split_context = st.toggle("Del opp konkordansene i flere kolonner", False, help="Del opp venstre og høyre kontekst til søkeordet i separate kolonner.")
+
         if split_context:
             show_columns = ["url", "year", "authors", "title", "left_context", "target", "right_context"]
-        else: 
+        else:
             show_columns = ["url", "year", "authors", "title", "concordance"]
 
         # Configure columns format
         col_config = {
-                "url":st.column_config.LinkColumn("nb.no", display_text = "🔗", width="small"), 
+                "url":st.column_config.LinkColumn("nb.no", display_text = "🔗", width="small"),
                 "year": st.column_config.TextColumn("Årstall"),
                 "authors": "Forfatter",
                 "title": st.column_config.TextColumn("Tittel", width="medium"),
-                "concordance": st.column_config.TextColumn("Konkordans", width="large"), 
-                "left_context": st.column_config.TextColumn("Venstre kontekst"), 
+                "concordance": st.column_config.TextColumn("Konkordans", width="large"),
+                "left_context": st.column_config.TextColumn("Venstre kontekst"),
                 "target": st.column_config.TextColumn("Søkeord"),
                 "right_context": st.column_config.TextColumn("Høyre kontekst")
             }
 
         st.dataframe(
-            concordances, 
+            concordances,
             column_config = col_config,
-            column_order = show_columns, 
+            column_order = show_columns,
             hide_index = True,
             use_container_width=True,
-            )
+        )
